@@ -51,3 +51,17 @@ export function showLoadMoreButton() {
 export function hideLoadMoreButton() {
   loadMoreBtn.classList.add('hidden');
 }
+
+export function smoothScroll() {
+  const gallery = document.querySelector('.gallery');
+  const card = gallery.firstElementChild;
+
+  if (!card) return;
+
+  const cardHeight = card.getBoundingClientRect().height;
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
+}
