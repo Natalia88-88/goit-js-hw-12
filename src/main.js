@@ -9,9 +9,11 @@ import {
   smoothScroll,
 } from './js/render-functions';
 import iziToast from 'izitoast';
+import 'izitoast/dist/css/iziToast.min.css';
 
 const form = document.querySelector('.form');
 const loadMoreBtn = document.querySelector('.load-more');
+
 let currentQuery = '';
 let currentPage = 1;
 const PER_PAGE = 15;
@@ -21,8 +23,17 @@ loadMoreBtn.addEventListener('click', onLoadMore);
 
 async function onSearch(event) {
   event.preventDefault();
+
   const query = event.target.elements['search-text'].value.trim();
-  if (!query) return;
+
+  if (!query) {
+    iziToast.warning({
+      message: 'Please enter a search query.',
+      position: 'topRight',
+    });
+    hideLoadMoreButton();
+    return;
+  }
 
   currentQuery = query;
   currentPage = 1;
@@ -34,7 +45,7 @@ async function onSearch(event) {
   try {
     const data = await getImagesByQuery(currentQuery, currentPage);
 
-    if (data.hits.length === 0) {
+    if (!data.hits.length) {
       iziToast.info({
         message: 'No images found. Please try another query.',
         position: 'topRight',
@@ -44,7 +55,6 @@ async function onSearch(event) {
 
     createGallery(data.hits);
 
-    // Якщо всі результати вмістились на першій сторінці
     if (data.totalHits <= PER_PAGE) {
       iziToast.info({
         message: "We're sorry, but you've reached the end of search results.",
@@ -55,7 +65,6 @@ async function onSearch(event) {
       showLoadMoreButton();
     }
 
-    // Очистити поле пошуку
     event.target.reset();
   } catch (error) {
     iziToast.error({
@@ -64,6 +73,7 @@ async function onSearch(event) {
     });
   } finally {
     hideLoader();
+    form.reset();
   }
 }
 
