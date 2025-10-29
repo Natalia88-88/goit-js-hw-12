@@ -13,16 +13,24 @@ const lightbox = new SimpleLightbox('.gallery a', {
 export function createGallery(images) {
   const markup = images
     .map(
-      image => `
+      ({
+        largeImageURL,
+        webformatURL,
+        tags,
+        likes,
+        views,
+        comments,
+        downloads,
+      }) => `
       <li class="gallery-item">
-        <a href="${image.largeImageURL}">
-          <img src="${image.webformatURL}" alt="${image.tags}" loading="lazy" />
+        <a href="${largeImageURL}">
+          <img src="${webformatURL}" alt="${tags}" loading="lazy" />
         </a>
         <div class="info">
-        <p>👍 ${image.likes}</p>
-        <p>👁️ ${image.views}</p>
-        <p>💬 ${image.comments}</p>
-        <p>⬇️ ${image.downloads}</p>
+        <p>👍 ${likes}</p>
+        <p>👁️ ${views}</p>
+        <p>💬 ${comments}</p>
+        <p>⬇️ ${downloads}</p>
       </div>
       </li>`
     )
@@ -53,13 +61,10 @@ export function hideLoadMoreButton() {
 }
 
 export function smoothScroll() {
-  const gallery = document.querySelector('.gallery');
-  const card = gallery.firstElementChild;
+  const firstCard = document.querySelector('.gallery-item');
+  if (!firstCard) return;
 
-  if (!card) return;
-
-  const cardHeight = card.getBoundingClientRect().height;
-
+  const cardHeight = firstCard.getBoundingClientRect().height;
   window.scrollBy({
     top: cardHeight * 2,
     behavior: 'smooth',

@@ -10,62 +10,56 @@ import {
 } from './js/render-functions';
 import iziToast from 'izitoast';
 
-const form = document.querySelector('.search-form');
-const input = document.querySelector('input[name="query"]');
+const form = document.querySelector('.form');
 const loadMoreBtn = document.querySelector('.load-more');
-
 let currentQuery = '';
 let currentPage = 1;
-const perPage = 15;
-let totalHits = 0;
+const PER_PAGE = 15;
 
 form.addEventListener('submit', onSearch);
 loadMoreBtn.addEventListener('click', onLoadMore);
 
-// 🔍 Пошук за запитом
-async function onSearch(e) {
-  e.preventDefault();
+async function onSearch(event) {
+  event.preventDefault();
+  const query = event.target.elements['search-text'].value.trim();
+  if (!query) return;
 
-  currentQuery = input.value.trim();
+  currentQuery = query;
   currentPage = 1;
+
   clearGallery();
   hideLoadMoreButton();
-
-  if (!currentQuery) {
-    iziToast.warning({
-      title: 'Oops',
-      message: 'Please enter a search query!',
-      position: 'topRight',
-    });
-    return;
-  }
+  showLoader();
 
   try {
-    showLoader();
-
     const data = await getImagesByQuery(currentQuery, currentPage);
-    totalHits = data.totalHits;
 
     if (data.hits.length === 0) {
-      iziToast.error({
-        title: 'Error',
-        message: 'Sorry, there are no images matching your search query.',
+      iziToast.info({
+        message: 'No images found. Please try another query.',
         position: 'topRight',
       });
       return;
     }
 
     createGallery(data.hits);
-    hideLoader();
 
-    if (totalHits > perPage) {
+    // Якщо всі результати вмістились на першій сторінці
+    if (data.totalHits <= PER_PAGE) {
+      iziToast.info({
+        message: "We're sorry, but you've reached the end of search results.",
+        position: 'topRight',
+      });
+      hideLoadMoreButton();
+    } else {
       showLoadMoreButton();
     }
+
+    // Очистити поле пошуку
+    event.target.reset();
   } catch (error) {
-    console.error(error);
     iziToast.error({
-      title: 'Error',
-      message: 'Something went wrong. Please try again later.',
+      message: 'Something went wrong while fetching images.',
       position: 'topRight',
     });
   } finally {
@@ -73,32 +67,31 @@ async function onSearch(e) {
   }
 }
 
-// 🔁 Завантаження додаткових зображень
 async function onLoadMore() {
-  currentPage += 1;
+  hideLoadMoreButton();
   showLoader();
 
   try {
+    currentPage += 1;
     const data = await getImagesByQuery(currentQuery, currentPage);
     createGallery(data.hits);
-    hideLoader();
-    smoothScroll(); // ✅ плавне прокручування після підвантаження
 
-    const totalLoaded = currentPage * perPage;
+    const totalLoaded = currentPage * PER_PAGE;
 
-    if (totalLoaded >= totalHits) {
-      hideLoadMoreButton();
+    if (totalLoaded >= data.totalHits) {
       iziToast.info({
-        title: 'End',
         message: "We're sorry, but you've reached the end of search results.",
         position: 'topRight',
       });
+      hideLoadMoreButton();
+    } else {
+      showLoadMoreButton();
     }
+
+    smoothScroll();
   } catch (error) {
-    console.error(error);
     iziToast.error({
-      title: 'Error',
-      message: 'Something went wrong while loading more images.',
+      message: 'Error loading more images.',
       position: 'topRight',
     });
   } finally {
